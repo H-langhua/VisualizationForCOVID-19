@@ -16,6 +16,6 @@ router.get('/list', async (req: Request, res: Response)=>{
 })
 
 app.listen(3333, ()=>{
-    console.log('server at http://127.0.0.1:3333')
+    console.log('server @ http://127.0.0.1:3333')
 })
 

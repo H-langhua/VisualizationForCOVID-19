@@ -1,8 +1,12 @@
 import express, { Express, Router, Request, Response } from 'express'
 import axios from 'axios'
-var bodyParser = require('body-parser');
 
 const app: Express = express()
+
+app.use('*', (req,res,next)=>{
+    res.header('Access-Control-Allow-Origin', '*')
+    next()
+})
 
 const router: Router = express.Router()
 
@@ -16,6 +20,6 @@ router.get('/list', async (req: Request, res: Response)=>{
 })
 
 app.listen(3333, ()=>{
-    console.log('server @ http://127.0.0.1:3333')
+    console.log('server @ http://localhost:3333')
 })
 

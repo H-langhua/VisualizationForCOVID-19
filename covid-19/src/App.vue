@@ -1,6 +1,41 @@
 <template>
   <div :style="{ background: `url(${bgimage})` }" class="box">
-    <div class="box-left"></div>
+    <div style="color:white" class="box-left">
+      <div class="box-left-card">
+        <section>
+          <div>较上日+ {{ store.chinaAdd.localConfirmH5 }}</div>
+          <div>{{ store.chinaTotal.localConfirm }}</div>
+          <div>本土现有确诊</div>
+        </section>
+        <section>
+          <div>较上日+ {{ store.chinaAdd.nowConfirm }}</div>
+          <div>{{ store.chinaTotal.nowConfirm }}</div>
+          <div>现有确诊</div>
+        </section>
+        <section>
+          <div>较上日+ {{ store.chinaAdd.confirm }}</div>
+          <div>{{ store.chinaTotal.confirm }}</div>
+          <div>累计确诊</div>
+        </section>
+        <section>
+          <div>较上日+ {{ store.chinaAdd.noInfect }}</div>
+          <div>{{ store.chinaTotal.noInfect }}</div>
+          <div>无症状感染者</div>
+        </section>
+        <section>
+          <div>较上日+ {{ store.chinaAdd.importedCase }}</div>
+          <div>{{ store.chinaTotal.importedCase }}</div>
+          <div>境外输入</div>
+        </section>
+        <section>
+          <div>较上日+ {{ store.chinaAdd.dead }}</div>
+          <div>{{ store.chinaTotal.dead }}</div>
+          <div>累计死亡</div>
+        </section>
+      </div>
+      <div class="box-left-pie"></div>
+      <div class="box-left-line"></div>
+    </div>
     <div class="box-center" id="china"></div>
     <div style="color:white" class="box-right">
       <table class="table" cellspacing="0" border="1">
@@ -34,20 +69,24 @@ import { onMounted } from 'vue';
 import * as echarts from 'echarts'
 import './assets/china'
 import { geoCoordMap } from './assets/geoMap'
+import 'animate.css'
 
 const store = useStore()
 
 onMounted(async () => {
   await store.getList()
   initCharts()
- 
+  initPie()
+  initLine()
 })
 
 const initCharts = () => {
   const citys = store.list.diseaseh5Shelf.areaTree[0].children
-  const data =  citys.map(v=>{
+  store.item = citys[2].children
+
+  const data = citys.map(v => {
     return {
-      name : v.name,
+      name: v.name,
       value: geoCoordMap[v.name].concat(v.total.nowConfirm),
       children: v.children
     }
@@ -158,10 +197,93 @@ const initCharts = () => {
       },
     ],
   })
-  charts.on('click', (e: any)=>{
-    // console.log(e.data.children);
+  charts.on('click', (e: any) => {
     store.item = e.data.children
   })
+}
+const initPie = () => {
+  const charts = echarts.init(document.querySelector('.box-left-pie') as HTMLElement)
+
+  const data = store.cityDetail.map(v => ({ name: v.city, value: v.local_confirm_add }))
+
+  charts.setOption({
+    backgroundColor: "#223651",
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: ['30%', '65%'],
+        avoidLabelOverlap: true,
+        itemStyle: {
+          borderRadius: 3,
+          borderColor: '#fff',
+          borderWidth: 1
+        },
+        label: {
+          show: true,
+          // position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            // fontSize: 20,
+            fontWeight: 'bold'
+          }
+        },
+        // labelLine: {
+        //   show: false
+        // },
+        data
+      }
+    ]
+  })
+
+}
+const initLine = () => {
+  const charts = echarts.init(document.querySelector('.box-left-line') as HTMLElement)
+  const option = {
+    backgroundColor: "#223651",
+    grid: {
+    right: 20,
+    left: 40,
+    top: 30,
+    bottom: 30,
+  },
+    tooltip: {
+      trigger: 'axis'
+    },
+    xAxis: {
+      type: 'category',
+      data: store.cityDetail.map(v => v.city),
+      axisLine: {
+        lineStyle: {
+          color: "#fff"
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: "#fff"
+        }
+      }
+    },
+    label: {
+      show: true
+    },
+    series: [
+      {
+        data: store.cityDetail.map(v => v.local_confirm_add),
+        type: 'line',
+        smooth: true
+      }
+    ]
+  };
+  charts.setOption(option)
 }
 </script>
 
@@ -172,9 +294,11 @@ const initCharts = () => {
   padding: 0;
   margin: 0;
 }
+
 @itemColor: #41b0db;
 @itemBg: #223651;
 @itemBorder: #212028;
+
 html,
 body,
 #app {
@@ -182,46 +306,75 @@ body,
   overflow: hidden;
 }
 
+.table {
+  width: 100%;
+  background: #212028;
+
+  tr {
+    th {
+      padding: 5px;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 2px 4px;
+      width: 30px;
+      white-space: nowrap;
+    }
+  }
+}
+
 .box {
   height: 100%;
   display: flex;
   overflow: hidden;
   padding: 10px;
+
   &-left {
-    width: 250px;
+    width: 350px;
+    padding-right: 10px;
+
     &-pie {
-      height: 320px;
-      margin-top: 20px;
+      height: 200px;
+      margin-top: 10px;
     }
+
     &-line {
-      height: 320px;
-      margin-top: 20px;
+      height: 200px;
+      margin-top: 10px;
     }
+
     &-card {
       display: grid;
       grid-template-columns: auto auto auto;
       grid-template-rows: auto auto;
+
       section {
+        font-size: 12px;
         background: @itemBg;
         border: 1px solid @itemBorder;
-        padding: 10px;
+        padding: 6px;
         display: flex;
         flex-direction: column;
         align-items: center;
+
         div:nth-child(2) {
           color: @itemColor;
-          padding: 10px 0;
-          font-size: 20px;
+          padding: 3px 0;
+          font-size: 14px;
           font-weight: bold;
         }
       }
     }
   }
+
   &-center {
     flex: 1;
   }
+
   &-right {
-    width: 250px;
+    width: 350px;
+    padding-left: 10px;
   }
 }
 </style>
